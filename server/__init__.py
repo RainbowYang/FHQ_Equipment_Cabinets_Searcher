@@ -1,16 +1,10 @@
-import argparse
-import json
-import MySQLdb
-import string
-
-
 class MyException(BaseException):
     def __init__(self, msg):
         super().__init__()
         self.msg = msg
 
     def __str__(self):
-        return self.msg
+        return str(self.__class__.__name__ + "(%s)" % self.msg)
 
 
 class ParserException(MyException):

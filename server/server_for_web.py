@@ -1,5 +1,11 @@
+import json
 from sys import stdin, stdout
-from server.server_core import run
+from server import ParserException, IllegalArgsException, ExecuteException
+from server.server_core import MyParser, DatabaseController
 
-print(run(stdin.readline()))
-stdout.flush()
+try:
+    print(json.dumps(DatabaseController.execute(MyParser.parse(stdin.readline()))))
+except (ParserException, IllegalArgsException, ExecuteException) as e:
+    print(json.dumps(str(e)))
+finally:
+    stdout.flush()

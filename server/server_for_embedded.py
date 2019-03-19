@@ -1,7 +1,8 @@
 import time
 import threading
 import socket
-from server import server_core
+from server import ParserException, IllegalArgsException, ExecuteException
+from server.server_core import MyParser, DatabaseController
 
 
 def print_with_time(message):
@@ -36,7 +37,7 @@ class TCPThread(threading.Thread):
                     conn.close()
                     return
                 print_with_time('[TCP] Receive (%s) from %s' % (data.decode(), addr))
-                result = server_core.run(data.decode())
+                result = run(data.decode())
                 conn.send(result.encode())
                 print_with_time('[TCP] Send (%s) to %s' % (result, addr))
             except ConnectionAbortedError as e:
@@ -56,11 +57,40 @@ class UDPThread(threading.Thread):
                 data, addr = self.sock.recvfrom(1024)
                 print_with_time("-" * 32)
                 print_with_time('[UDP] Receive (%s) from %s' % (data.decode(), addr))
-                result = server_core.run(data.decode())
+                result = run(data.decode())
                 self.sock.sendto(result.encode(), addr)
                 print_with_time('[UDP] Send (%s) to %s' % (result, addr))
             except ConnectionResetError as e:
                 print_with_time(e)
+
+
+def run(cmd: str) -> str:
+    try:
+        args = MyParser.parse(cmd)
+    except ParserException as e:
+        return str(e)
+    else:
+        if args.operator == "SELECT_ALL":
+            return "TODO"
+        elif args.operator == "SELECT":
+            try:
+                result = DatabaseController.execute(args)
+                if args.name is None:
+                    return str(result[0][1])
+                else:
+                    return str(result[0][0])
+            except IllegalArgsException as e:
+                return str(e)
+            except ExecuteException as e:
+                if 'Empty' in str(e):
+                    return 'Empty'
+                elif 'Not Found' in str(e):
+                    return '0'
+        else:
+            try:
+                return str(DatabaseController.execute(args))
+            except (IllegalArgsException, ExecuteException) as e:
+                return str(e)
 
 
 if __name__ == '__main__':

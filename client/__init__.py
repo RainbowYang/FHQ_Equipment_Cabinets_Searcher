@@ -13,7 +13,7 @@ import socket
 s = socket.socket()  # socket 默认为TCP
 # s.connect(('118.25.49.70', 6666))
 s.connect(('127.0.0.1', 6666))
-s.send(b"insert -n test -l 1234")
+s.send(b"select_all")
 print(s.recv(1024))
 s.send(b'EXIT')
 s.close()
