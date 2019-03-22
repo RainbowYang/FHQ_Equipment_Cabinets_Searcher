@@ -4,7 +4,7 @@ import MySQLdb
 
 from server import ParserException, IllegalArgsException, ExecuteException
 
-methods = {"SELECT", "SELECT_ALL", "DELETE", "DELETE_ALL", "INSERT", "UPDATE"}
+methods = {"SELECT", "SELECT_ALL", "DELETE", "DELETE_ALL", "INSERT", "UPDATE", "RESTORE"}
 
 
 class MyParser(argparse.ArgumentParser):
@@ -38,7 +38,7 @@ class DatabaseController(object):
         self.cursor = self.connection.cursor()
         self.methods = {"SELECT": self.select, "SELECT_ALL": self.select_all,
                         "DELETE": self.delete, "DELETE_ALL": self.delete_all,
-                        "INSERT": self.insert, "UPDATE": self.update}
+                        "INSERT": self.insert, "UPDATE": self.update, "RESTORE": self.restore}
 
     def connect(self):
         self.connection = MySQLdb.connect(self.ip, self.user, self.password, self.database)
@@ -63,7 +63,6 @@ class DatabaseController(object):
             return result
 
     def select_all(self, name=None, location=None):
-        self.check_name_and_location(name, location, 0)
         return self.run_sql("SELECT location,name FROM %s" % self.table)
 
     def delete(self, name=None, location=None) -> str:
@@ -87,7 +86,6 @@ class DatabaseController(object):
                 return str(item[0]) + "is Successfully Deleted"
 
     def delete_all(self, name=None, location=None) -> str:
-        self.check_name_and_location(name, location, 0)
         self.run_sql("DELETE FROM %s" % self.table)
         return "All items are Successfully Deleted"
 
@@ -106,6 +104,13 @@ class DatabaseController(object):
                 raise ExecuteException("The Location(%s) is Not Empty" % location)
         else:
             raise ExecuteException("The Name(%s) is Existed" % name)
+
+    def restore(self, name=None, location=None):
+        self.delete_all()
+        for item in [[1, 'Switch'], [2, 'Resistor'], [3, 'Capacitor'], [4, 'Inductor'],
+                     [5, 'Battery'], [6, 'Diode'], [7, 'Triode']]:
+            self.insert(item[1], item[0])
+        return "All items are Deleted and Restored"
 
     def update(self, name=None, location=None):
         """
