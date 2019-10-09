@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html class="hola-html-reset" lang="zh">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>智能仪器位置查询系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/holakit/dist/holakit.css">
+    <script src="http://code.jquery.com/jquery-3.3.1.js"
+            integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+            crossorigin="anonymous"></script>
+    <style>
+        .wrap {
+            height: 100vh;
+            background-image: url(http://zhaosheng.hdu.edu.cn/admin/upload/image/20170624114958_69716.jpg);
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            text-transform: capitalize;
+        }
+
+        .hola-columns-item {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body class="hola-body-typography hola-grey-bg">
+<div class="wrap">
+    <div class="hola-container">
+        <div class="hola-columns hola-card-stack">
+            <div class="hola-columns-item">
+                <div class="hola-card">
+                    <h2 class="hola-card-title">智能仪器位置查询系统</h2>
+                    <h3 class="hola-card-list-item-title-title">孵化器四轮考核第二组出品</h3>
+                    <h2 class="hola-card-title"></h2>
+                    <h3 class="hola-card-list-item-title-title">网络组</h3>
+                    <p>杨雨健、刘雨晨</p>
+                    <h3 class="hola-card-list-item-title-title">嵌入式组</h3>
+                    <p>李宇轩、曹永康、周璐露、
+                        <del>阮炳鑫</del>
+                    </p>
+                    <h3 class="hola-card-list-item-title-title">硬件组</h3>
+                    <p>陈诗凯</p>
+                </div>
+            </div>
+            <div class="hola-columns-item"></div>
+            <div class="hola-columns-item">
+                <div class="hola-card">
+                    <h2 class="hola-card-title">操作区</h2>
+                    <p>
+                        <input class="hola-form-ctrl hola-input-singleline" type="text" placeholder="仪器名称"
+                               id='name'>
+                        <a href="#" class="hola-button hola-button-primary" onclick="my.clear_name()">clear</a>
+                    </p>
+                    <p>
+                        <input class="hola-form-ctrl hola-input-singleline" type="text" placeholder="仪器位置"
+                               id='location'>
+                        <a href="#" class="hola-button hola-button-primary" onclick="my.clear_location()">clear</a>
+                    </p>
+                    <p>
+                        <a href="#" class="hola-button hola-button-primary" onclick="my.select()">查找</a>
+                        <a href="#" class="hola-button hola-button-primary" onclick="my.delete()">删除</a>
+                        <a href="#" class="hola-button hola-button-primary" onclick="my.insert()">添加</a>
+                        <a href="#" class="hola-button hola-button-primary" onclick="my.update()">更新</a>
+                    </p>
+                    <p>
+                        <a href="#" class="hola-button hola-button-primary" onclick="my.select_all()">显示所有</a>
+                        <a href="#" class="hola-button hola-button-primary" onclick="my.delete_all()">删除所有</a>
+                        <a href="#" class="hola-button hola-button-primary" onclick="my.restore()">恢复原始</a>
+                    </p>
+                </div>
+            </div>
+            <div class="hola-columns-item"></div>
+            <div class="hola-columns-item" id="info">
+                <div class="hola-card">
+                    <h2 class="hola-card-title">结果</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    let my = {};
+    my.clear_name = clean_input('name');
+    my.clear_location = clean_input('location');
+
+    my.select = send_cmd('select');
+    my.delete = send_cmd('delete');
+    my.insert = send_cmd('insert');
+    my.update = send_cmd('update');
+    my.select_all = send_cmd('select_all');
+    my.delete_all = send_cmd('delete_all');
+    my.restore = send_cmd('restore');
+
+    function clean_input(name) {
+        return () => $("#" + name).val("");
+    }
+
+    function send_cmd(cmd) {
+        return () => {
+            let name = $('#name').val();
+            let location = $('#location').val();
+            socket.send(cmd.toString() + (name ? " -n " + name : '') + (location ? " -l " + location : ''));
+            reconnect();
+        };
+    }
+
+    let socket = {};
+    reconnect();
+    socket.onopen = my.select_all;
+
+    function reconnect() {
+        socket = new WebSocket("ws://118.25.49.70:8080");
+        socket.onmessage = function (ev) {
+            let json = JSON.parse(ev.data);
+
+            let result = '<div class="hola-card"><h2 class="hola-card-title">结果</h2>';
+            if (typeof json === "string") {
+                result += '<strong>' + json + '</strong>';
+            } else {
+                result += '<ul class="hola-vmenu">';
+                json.sort((a, b) => a[0] - b[0]);
+                json.forEach(item =>
+                    result += '<li class="hola-vmenu-item">' +
+                        '<a><span class="hola-badge hola-badge-radii">' + item[0] + '</span>' + item[1] + '</a></p>' +
+                        '</li>');
+            }
+            result += '</div>';
+
+            let info = $('#info');
+            info.empty();
+            info.append(result);
+        };
+    }
+</script>
+</body>
+</html>
